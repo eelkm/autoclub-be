@@ -1,27 +1,35 @@
+// server.js
 const express = require('express');
-require('dotenv').config()
+const cors = require('cors');
+require('dotenv').config();
 
 const bodyParser = require('body-parser');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const db = require('./db/db.js'); // Importing the db.js file
-
+const db = require('./db/db.js');
 const app = express();
-const port = 30029;
+const port = 5000;
 
+// Middleware for handling CORS and parsing JSON
+app.use(cors());
 app.use(bodyParser.json());
 
-// Pool connection
-app.use((req, res, next) => {
-  req.db = db;
-  next();
+// Pool connection middleware
+app.use(async (req, res, next) => {
+  try {
+    req.db = db;
+    next();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // Routes
-app.use('/auth', authRoutes);
+const userRoutes = require('./routes/users');
+const registerRoutes = require('./routes/register');
+const loginRoutes = require('./routes/login');
 app.use('/users', userRoutes);
-
-
+app.use('/register', registerRoutes);
+app.use('/login', loginRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
