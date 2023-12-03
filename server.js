@@ -24,12 +24,15 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-const userRoutes = require('./routes/users');
+const get_user = require('./routes/get_user');
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
-app.use('/users', userRoutes);
+const get_clubs_roles = require('./routes/get_clubs_roles');
+app.use('/get_user', get_user);
 app.use('/register', registerRoutes);
 app.use('/login', loginRoutes);
+app.use('/get_clubs_roles', get_clubs_roles);
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

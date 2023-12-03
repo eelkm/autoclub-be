@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const register = express.Router();
 const db = require('../db/db.js');
 const jwt = require('jsonwebtoken');
@@ -31,8 +32,11 @@ register.post('/', (req, res) => {
           console.error('Error querying database: ', err);
           res.status(500).json({ success: false, error: 'Internal Server Error' });
         } else {
+          // Get the user ID of the newly registered user
+          const userId = results.insertId;
+
           // Generate a JWT token for the newly registered user
-          const token = jwt.sign({ username: username }, 'your-secret-key', { expiresIn: '1h' });
+          const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
           res.json({ success: true, token, results });
         }
