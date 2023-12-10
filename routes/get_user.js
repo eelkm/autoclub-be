@@ -28,7 +28,7 @@ function verifyToken(req, res, next) {
 }
 
 
-
+// Gets the user data with the given user ID from the JWT token
 users.get('/', verifyToken, (req, res, next) => {
   const userId = req.userId;
   const username = req.query.username; // Get username from query parameters
@@ -59,7 +59,7 @@ users.get('/', verifyToken, (req, res, next) => {
 });
 
 
-
+// Gets the username of the user with the given user ID from the JWT token
 users.get('/get_username', verifyToken, (req, res, next) => {
   const userId = req.userId;
 
@@ -73,6 +73,42 @@ users.get('/get_username', verifyToken, (req, res, next) => {
       res.status(404).json({ success: false, error: 'User not found' });
     } else {
       res.json({ success: true, username: results[0].username, p_image_link: results[0].p_image_link });
+    }
+  });
+});
+
+
+// Gets the posts of the user with the given username
+users.get('/user_posts', verifyToken, (req, res, next) => {
+  const providedUsername = req.query.username;
+  const startPost = parseInt(req.query.startPost) || 0; // Default to 0 if not provided
+  const endPost = parseInt(req.query.endPost) || 10; // Default to 10 if not provided
+
+  if (!providedUsername) {
+    return res.status(400).json({ success: false, error: 'Username is required in the query parameters' });
+  }
+
+  const query = `
+  SELECT u.username, p.id_profile_post, p.date_created, p.text, p.post_media_url, p.likes,
+  COALESCE(c.comment_count, 0) AS comment_count
+  FROM User u
+  JOIN ProfilePost p ON u.id_user = p.user_id
+  LEFT JOIN (
+    SELECT profile_post_id, COUNT(*) AS comment_count
+    FROM Comment
+    GROUP BY profile_post_id
+  ) c ON p.id_profile_post = c.profile_post_id
+  WHERE u.username = ?
+  ORDER BY p.date_created DESC
+  LIMIT ? OFFSET ?
+  `;
+
+  db.query(query, [providedUsername, endPost, startPost], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.status(200).json({ success: true, posts: results });
     }
   });
 });
