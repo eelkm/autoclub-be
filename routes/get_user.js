@@ -29,13 +29,24 @@ function verifyToken(req, res, next) {
 
 
 
-
 users.get('/', verifyToken, (req, res, next) => {
   const userId = req.userId;
+  const username = req.query.username; // Get username from query parameters
 
-  const query = 'SELECT * FROM User WHERE id_user = ?';
-  
-  db.query(query, [userId], (err, results) => {
+  let query;
+  let queryParams;
+
+  if (username) {
+    // If username is provided, search by username
+    query = 'SELECT username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE username = ?';
+    queryParams = [username];
+  } else {
+    // If no username is provided, search by user ID
+    query = 'SELECT username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE id_user = ?';
+    queryParams = [userId];
+  }
+
+  db.query(query, queryParams, (err, results) => {
     if (err) {
       console.error('Error querying database: ', err);
       res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -49,28 +60,24 @@ users.get('/', verifyToken, (req, res, next) => {
 
 
 
-users.get('/userRolesClubs', verifyToken, (req, res, next) => {
+users.get('/get_username', verifyToken, (req, res, next) => {
   const userId = req.userId;
 
-  const query = `
-    SELECT c.name, c.banner_img_url, r.role_name
-    FROM User u, User_Role_Club x, Club c, Role r
-    WHERE
-      u.id_user = ? AND
-      u.id_user = x.user_id AND
-      c.id_club = x.club_id AND
-      r.id_role = x.role_id
-  `;
+  const query = 'SELECT username, p_image_link FROM User WHERE id_user = ?';
 
   db.query(query, [userId], (err, results) => {
     if (err) {
       console.error('Error querying database: ', err);
       res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else if (results.length === 0) {
+      res.status(404).json({ success: false, error: 'User not found' });
     } else {
-      res.json({ success: true, userRolesClubs: results });
+      res.json({ success: true, username: results[0].username, p_image_link: results[0].p_image_link });
     }
   });
 });
+
+
 
 
 module.exports = users;

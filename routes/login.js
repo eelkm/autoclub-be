@@ -20,7 +20,7 @@ login.post('/', (req, res) => {
       res.status(401).json({ success: false, error: 'Invalid username or password' });
     } else {
       // Username exists, compare passwords
-      const userId = checkResults[0].id_user; // Assuming the user ID column is named 'id_user'
+      const userId = checkResults[0].id_user;
       const hashedPassword = checkResults[0].password;
 
       const passwordMatch = await bcrypt.compare(password, hashedPassword);

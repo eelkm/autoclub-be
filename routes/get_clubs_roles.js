@@ -32,7 +32,7 @@ clubs.get('/', verifyToken, (req, res, next) => {
   const userId = req.userId;
 
   const query = `
-    SELECT c.name, c.banner_img_url, r.role_name, x.is_approved
+    SELECT c.name, c.small_img_url, r.role_name, x.is_approved
     FROM User u, User_Role_Club x, Club c, Role r
     WHERE
       u.id_user = ? AND
@@ -47,6 +47,35 @@ clubs.get('/', verifyToken, (req, res, next) => {
       res.status(500).json({ success: false, error: 'Internal Server Error' });
     } else {
       res.json({ success: true, userRolesClubs: results });
+    }
+  });
+});
+
+
+clubs.get('/member_of_clubs', verifyToken, (req, res, next) => {
+  const providedUsername = req.query.username;
+
+  if (!providedUsername) {
+    return res.status(400).json({ success: false, error: 'Username is required in the query parameters' });
+  }
+
+  const query = `
+    SELECT c.name, c.small_img_url, r.role_name
+    FROM User u, User_Role_Club x, Club c, Role r
+    WHERE
+      u.username = ? AND
+      u.id_user = x.user_id AND
+      c.id_club = x.club_id AND
+      r.id_role = x.role_id AND
+      x.is_approved = 1
+  `;
+
+  db.query(query, [providedUsername], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, memberOfClubs: results });
     }
   });
 });
