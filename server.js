@@ -25,15 +25,19 @@ app.use(async (req, res, next) => {
 
 // Routes
 const get_user = require('./routes/get_user');
+const post_user = require('./routes/post_user');
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
 const get_clubs_roles = require('./routes/get_clubs_roles');
+const s3url = require('./routes/get_s3_secure_url');
 app.use('/get_user', get_user);
+app.use('/post_user', post_user);
 app.use('/users', get_user);
 app.use('/register', registerRoutes);
 app.use('/login', loginRoutes);
 app.use('/get_clubs_roles', get_clubs_roles);
 app.use('/clubs', get_clubs_roles);
+app.use('/s3url', s3url);
 
 
 app.listen(port, () => {

@@ -27,7 +27,7 @@ function verifyToken(req, res, next) {
   });
 }
 
-
+// Gets all the clubs that user is a member of or follows
 clubs.get('/', verifyToken, (req, res, next) => {
   const userId = req.userId;
 
