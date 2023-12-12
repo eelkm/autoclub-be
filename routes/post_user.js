@@ -43,4 +43,21 @@ post_user.post('/add_post', verifyToken, (req, res) => {
   });
 });
 
+post_user.delete('/delete_profile_post', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { id_profile_post } = req.body;
+
+  const deleteQuery = 'DELETE FROM ProfilePost WHERE user_id = ? AND id_profile_post = ?';
+
+  db.query(deleteQuery, [userId, id_profile_post], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, results });
+      console.log(userId, id_profile_post);
+    }
+  });
+});
+
 module.exports = post_user;
