@@ -30,7 +30,7 @@ login.post('/', (req, res) => {
         res.status(401).json({ success: false, error: 'Invalid username or password' });
       } else {
         // Passwords match, generate a JWT token with user ID
-        const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: 50 * 365 * 24 * 60 * 60 }); // 50 years :) Will change later
         console.log(userId);
         console.log('token ', token);
 

@@ -113,6 +113,54 @@ users.get('/user_posts', verifyToken, (req, res, next) => {
   });
 });
 
+users.post('/update_desc_about', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { desc_about } = req.body;
+
+  const updateQuery = 'UPDATE User SET desc_about = ? WHERE id_user = ?';
+
+  db.query(updateQuery, [desc_about, userId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
+users.post('/update_profile_picture', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { p_image_link } = req.body;
+
+  const updateQuery = 'UPDATE User SET p_image_link = ? WHERE id_user = ?';
+
+  db.query(updateQuery, [p_image_link, userId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, results });
+    }
+  });
+})
+
+users.post('/update_cover_picture', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { p_banner_link } = req.body;
+
+  const updateQuery = 'UPDATE User SET p_banner_link = ? WHERE id_user = ?';
+
+  db.query(updateQuery, [p_banner_link, userId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, results });
+    }
+  });
+})
+
 
 
 
