@@ -5,6 +5,11 @@ const dotenv = require('dotenv');
 const s3url = express.Router();
 const jwt = require('jsonwebtoken');
 
+// 1. Fronted requests secure url from Backend
+// 2. Backend with credentals requests secure URL from S3 and sends that to Frontend
+// 3. Frontend posts image data to S3 bucket using secure URL
+// 4. Frontend sends to Backet that upload was succesfull (Puts url in DB)
+
 dotenv.config();
 
 // Middleware to verify the JWT token
