@@ -94,6 +94,22 @@ cars.post('/add_car', verifyToken, (req, res) => {
   });
 });
 
+cars.post('/add_car_image', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { car_id, car_image_url } = req.body;
+
+  const insertQuery = 'INSERT INTO CarImage (car_id, car_image_url) VALUES (?, ?)';
+  db.query(insertQuery, [car_id, car_image_url], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+    else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
 
 
 
