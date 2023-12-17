@@ -24,19 +24,25 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-const get_user = require('./routes/get_user');
-const post_user = require('./routes/post_user');
+const user_routes = require('./routes/user_routes');
+const user_posts_routes = require('./routes/user_posts_routes.js');
+const user_garage_routes = require('./routes/user_garage_routes.js');
+
+
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
-const get_clubs_roles = require('./routes/get_clubs_roles');
+
+const user_club_role_routes = require('./routes/user_club_role_routes.js');
 const s3url = require('./routes/get_s3_secure_url');
-app.use('/get_user', get_user);
-app.use('/post_user', post_user);
-app.use('/users', get_user);
+
 app.use('/register', registerRoutes);
 app.use('/login', loginRoutes);
-app.use('/get_clubs_roles', get_clubs_roles);
-app.use('/clubs', get_clubs_roles);
+
+app.use('/users', user_routes);
+app.use('/post_user', user_posts_routes);
+app.use('/clubs', user_club_role_routes);
+app.use('/cars', user_garage_routes);
+
 app.use('/s3url', s3url);
 
 

@@ -29,7 +29,7 @@ function verifyToken(req, res, next) {
 
 
 // Gets the user data with the given user ID from the JWT token
-users.get('/', verifyToken, (req, res, next) => {
+users.get('/get_user', verifyToken, (req, res, next) => {
   const userId = req.userId;
   const username = req.query.username; // Get username from query parameters
 
@@ -77,89 +77,6 @@ users.get('/get_username', verifyToken, (req, res, next) => {
   });
 });
 
-
-// Gets the posts of the user with comment count with the given username
-users.get('/user_posts', verifyToken, (req, res, next) => {
-  const providedUsername = req.query.username;
-  const startPost = parseInt(req.query.startPost) || 0; // Default to 0 if not provided
-  const endPost = parseInt(req.query.endPost) || 10; // Default to 10 if not provided
-
-  if (!providedUsername) {
-    return res.status(400).json({ success: false, error: 'Username is required in the query parameters' });
-  }
-
-  const query = `
-  SELECT u.username, p.id_profile_post, p.date_created, p.text, p.post_media_url, p.likes,
-  COALESCE(c.comment_count, 0) AS comment_count
-  FROM User u
-  JOIN ProfilePost p ON u.id_user = p.user_id
-  LEFT JOIN (
-    SELECT profile_post_id, COUNT(*) AS comment_count
-    FROM Comment
-    GROUP BY profile_post_id
-  ) c ON p.id_profile_post = c.profile_post_id
-  WHERE u.username = ?
-  ORDER BY p.date_created DESC
-  LIMIT ? OFFSET ?
-  `;
-
-  db.query(query, [providedUsername, endPost, startPost], (err, results) => {
-    if (err) {
-      console.error('Error querying database: ', err);
-      res.status(500).json({ success: false, error: 'Internal Server Error' });
-    } else {
-      res.status(200).json({ success: true, posts: results });
-    }
-  });
-});
-
-// Gets all the cars of the user and comment counts with the given username
-users.get('/user_cars', verifyToken, (req, res, next) => {
-  const providedUsername = req.query.username;
-
-  if (!providedUsername) {
-    return res.status(400).json({ success: false, error: 'Username is required in the query parameters' });
-  }
-
-  const query =
-  `SELECT
-    c.*,
-    ci.car_image_url AS first_photo,
-    COALESCE(cmt.comment_count, 0) AS comment_count
-  FROM
-    Car c
-  JOIN User u ON c.user_id = u.id_user
-  LEFT JOIN (
-    SELECT
-        car_id,
-        MIN(id_car_image) AS first_photo_id
-    FROM
-        CarImage
-    GROUP BY
-        car_id
-  ) first_photo_ids ON c.id_car = first_photo_ids.car_id
-  LEFT JOIN CarImage ci ON first_photo_ids.first_photo_id = ci.id_car_image
-  LEFT JOIN (
-    SELECT
-        car_id,
-        COUNT(*) AS comment_count
-    FROM
-        Comment
-    GROUP BY
-        car_id
-  ) cmt ON c.id_car = cmt.car_id
-  WHERE
-    u.username = ?`
-
-  db.query(query, [providedUsername], (err, results) => {
-    if (err) {
-      console.error('Error querying database: ', err);
-      res.status(500).json({ success: false, error: 'Internal Server Error' });
-    } else {
-      res.status(200).json({ success: true, cars: results });
-    }
-  });
-})
 
 // Updates the user's description / about section
 users.post('/update_desc_about', verifyToken, (req, res) => {
