@@ -38,7 +38,7 @@ post_user.get('/user_posts', verifyToken, (req, res, next) => {
   }
 
   const query = `
-  SELECT u.username, p.id_profile_post, p.date_created, p.text, p.post_media_url, p.likes,
+  SELECT u.username, p.id_profile_post, p.date_created, p.text, p.post_media_url,
   COALESCE(c.comment_count, 0) AS comment_count
   FROM User u
   JOIN ProfilePost p ON u.id_user = p.user_id
@@ -66,7 +66,7 @@ post_user.post('/add_post', verifyToken, (req, res) => {
   const userId = req.userId;
   const { text, post_media_url } = req.body;
 
-  const insertQuery = 'INSERT INTO ProfilePost (user_id, text, post_media_url, likes) VALUES (?, ?, ?, 0)';
+  const insertQuery = 'INSERT INTO ProfilePost (user_id, text, post_media_url) VALUES (?, ?, ?)';
 
   db.query(insertQuery, [userId, text, post_media_url], (err, results) => {
     if (err) {

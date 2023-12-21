@@ -76,12 +76,11 @@ cars.get('/user_cars', verifyToken, (req, res, next) => {
 })
 
 // Adds car to the database and returns the car ID
-
 cars.post('/add_car', verifyToken, (req, res) => {
   const userId = req.userId;
   const { make_model, desc_car, year } = req.body;
 
-  const insertQuery = 'INSERT INTO Car (user_id, make_model, desc_car, year, likes) VALUES (?, ?, ?, ?, 0)';
+  const insertQuery = 'INSERT INTO Car (user_id, make_model, desc_car, year) VALUES (?, ?, ?, ?)';
   db.query(insertQuery, [userId, make_model, desc_car, year], (err, results) => {
     if (err) {
       console.error('Error querying database: ', err);
@@ -94,6 +93,64 @@ cars.post('/add_car', verifyToken, (req, res) => {
   });
 });
 
+// Updates the car
+cars.post('/update_car', verifyToken, (req, res) => {
+  // const userId = req.userId;
+  const { make_model, desc_car, year, id_car } = req.body;
+
+  const updateQuery = 'UPDATE Car SET make_model = ?, desc_car = ?, year = ? WHERE id_car = ?';
+  db.query(updateQuery, [make_model, desc_car, year, id_car], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    } else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
+// Deletes the car
+cars.post('/delete_car', verifyToken, (req, res) => {
+  // const userId = req.userId;
+  const { id_car } = req.body;
+
+  const deleteQuery = 'DELETE FROM Car WHERE id_car = ?';
+  db.query(deleteQuery, [id_car], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    } else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
+
+// Gets all car images of the car with the given car ID
+cars.get('/car_images', verifyToken, (req, res, next) => {
+  const userId = req.userId;
+  // get car_id from url
+  const car_id = req.query.car_id;
+
+  if (!car_id) {
+    return res.status(400).json({ success: false, error: 'Car ID is required in the query parameters' });
+  }
+
+  const query = 'SELECT * FROM CarImage WHERE car_id = ?';
+
+  db.query(query, [car_id], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+    else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
+
+// Adds car image to the database
 cars.post('/add_car_image', verifyToken, (req, res) => {
   const userId = req.userId;
   const { car_id, car_image_url } = req.body;
@@ -103,6 +160,23 @@ cars.post('/add_car_image', verifyToken, (req, res) => {
     if (err) {
       console.error('Error querying database: ', err);
       res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+    else {
+      res.json({ success: true, results });
+    }
+  });
+});
+
+// Deletes car image from the database
+cars.post('/delete_car_image', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { id_car_image } = req.body;
+
+  const deleteQuery = 'DELETE FROM CarImage WHERE id_car_image = ?';
+  db.query(deleteQuery, [id_car_image], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
     else {
       res.json({ success: true, results });
