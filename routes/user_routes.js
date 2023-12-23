@@ -129,6 +129,29 @@ users.post('/update_cover_picture', verifyToken, (req, res) => {
   });
 })
 
+// Gets the user's friends that he is following
+users.get('/get_friends', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const username = req.query.username;
+
+  const query = `
+  SELECT fu.username, fu.p_image_link
+  FROM User u
+  JOIN Friends f ON u.id_user = f.user_id
+  JOIN User fu ON f.followed_user_id = fu.id_user
+  WHERE u.username = ?;  
+  `;
+
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    } else {
+      res.json({ success: true, friends: results });
+    }
+  });
+});
+
 
 
 
