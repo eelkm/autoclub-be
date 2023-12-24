@@ -38,11 +38,11 @@ users.get('/get_user', verifyToken, (req, res, next) => {
 
   if (username) {
     // If username is provided, search by username
-    query = 'SELECT username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE username = ?';
+    query = 'SELECT id_user, username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE username = ?';
     queryParams = [username];
   } else {
     // If no username is provided, search by user ID
-    query = 'SELECT username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE id_user = ?';
+    query = 'SELECT id_user, username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE id_user = ?';
     queryParams = [userId];
   }
 
@@ -151,6 +151,64 @@ users.get('/get_friends', verifyToken, (req, res) => {
     }
   });
 });
+
+// Check if the user is following the given user, returns true if following, false if not
+users.get('/check_if_friends', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const friendId = req.query.friendId;
+
+  const query = `
+  SELECT * FROM Friends WHERE user_id = ? AND followed_user_id = ?;
+  `;
+
+  db.query(query, [userId, friendId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    } else {
+      res.json({ success: true, isFollowing: results.length > 0 });
+    }
+  })
+});
+
+// Adds the given user to the user's friends
+users.post('/add_friend', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const friendId = req.body.friendId;
+
+  const query = `
+  INSERT INTO Friends (user_id, followed_user_id) VALUES (?, ?);
+  `;
+
+  db.query(query, [userId, friendId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    } else {
+      res.json({ success: true });
+    }
+  })
+});
+
+// Removes the given user from the user's friends
+users.post('/remove_friend', verifyToken, (req, res) => {
+  const userId = req.userId;
+  const friendId = req.body.friendId;
+
+  const query = `
+  DELETE FROM Friends WHERE user_id = ? AND followed_user_id = ?;
+  `;
+
+  db.query(query, [userId, friendId], (err, results) => {
+    if (err) {
+      console.error('Error querying database: ', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    } else {
+      res.json({ success: true });
+    }
+  })
+});
+
 
 
 
