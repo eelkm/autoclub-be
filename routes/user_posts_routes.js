@@ -151,4 +151,52 @@ post_user.post("/like_post", verifyToken, (req, res) => {
   });
 });
 
+// Get post by single post id
+post_user.get("/get_post", verifyToken, (req, res) => {
+  const userId = req.userId;
+  const { id_profile_post } = req.query;
+
+  const selectQuery = `
+    SELECT
+      p.id_profile_post,
+      p.date_created,
+      p.text,
+      p.post_media_url,
+      COALESCE(l.like_count, 0) AS like_count,
+      IFNULL(l.has_liked, 0) AS has_liked
+    FROM
+      ProfilePost p
+    LEFT JOIN (
+      SELECT
+        profile_post_id,
+        COUNT(*) AS like_count,
+        MAX(user_id = ?) AS has_liked
+      FROM
+        Likes
+      WHERE
+        profile_post_id = ?
+      GROUP BY
+        profile_post_id
+    ) l ON p.id_profile_post = l.profile_post_id
+    WHERE
+      p.id_profile_post = ?;
+
+  `;
+
+  db.query(
+    selectQuery,
+    [userId, id_profile_post, id_profile_post],
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database: ", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal Server Error" });
+      } else {
+        res.json({ success: true, post: results[0] });
+      }
+    }
+  );
+});
+
 module.exports = post_user;
