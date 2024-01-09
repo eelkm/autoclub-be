@@ -137,14 +137,38 @@ users.post("/update_cover_picture", verifyToken, (req, res) => {
 users.get("/get_friends", verifyToken, (req, res) => {
   const userId = req.userId;
   const username = req.query.username;
+  const type = req.query.type;
 
-  const query = `
-  SELECT fu.username, fu.p_image_link
-  FROM User u
-  JOIN Friends f ON u.id_user = f.user_id
-  JOIN User fu ON f.followed_user_id = fu.id_user
-  WHERE u.username = ?;  
-  `;
+  let query;
+
+  if (type === "following") {
+    query = `
+    SELECT fu.username, fu.p_image_link
+    FROM User u
+    JOIN Friends f ON u.id_user = f.user_id
+    JOIN User fu ON f.followed_user_id = fu.id_user
+    WHERE u.username = ?;  
+    `;
+  } else if (type === "followers") {
+    query = `
+    SELECT fu.username, fu.p_image_link
+    FROM User u
+    JOIN Friends f ON u.id_user = f.followed_user_id
+    JOIN User fu ON f.user_id = fu.id_user
+    WHERE u.username = ?;
+    `;
+  } else {
+    res.status(400).json({ success: false, error: "Invalid type" });
+    return;
+  }
+
+  // const query = `
+  // SELECT fu.username, fu.p_image_link
+  // FROM User u
+  // JOIN Friends f ON u.id_user = f.user_id
+  // JOIN User fu ON f.followed_user_id = fu.id_user
+  // WHERE u.username = ?;
+  // `;
 
   db.query(query, [username], (err, results) => {
     if (err) {
@@ -230,6 +254,29 @@ users.get("/get_stats", verifyToken, (req, res) => {
       res.status(500).json({ success: false });
     } else {
       res.json({ success: true, stats: results[0] });
+    }
+  });
+});
+
+// Search users
+users.get("/search_users", verifyToken, (req, res) => {
+  const userId = req.userId;
+  const searchQuery = req.query.search_query;
+
+  console.log("search_query", searchQuery);
+
+  const query = `
+  SELECT id_user, username, p_image_link
+  FROM User
+  WHERE username LIKE ?
+  LIMIT 10;
+  `;
+
+  db.query(query, [`%${searchQuery}%`], (err, results) => {
+    if (err) {
+      res.status(500).json({ success: false });
+    } else {
+      res.json({ success: true, users: results });
     }
   });
 });
