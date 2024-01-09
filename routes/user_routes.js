@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const users = express.Router();
-const db = require("../db/db.js");
+const { executeQuery } = require("../db/db.js");
 const jwt = require("jsonwebtoken");
 
 // Middleware to verify the JWT token
@@ -29,256 +29,225 @@ function verifyToken(req, res, next) {
 }
 
 // Gets the user data with the given user ID from the JWT token or username from query parameters
-users.get("/get_user", verifyToken, (req, res, next) => {
-  const userId = req.userId;
-  const username = req.query.username; // Get username from query parameters
+users.get("/get_user", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const username = req.query.username;
 
-  let query;
-  let queryParams;
+    const query = `
+      SELECT id_user, username, p_image_link, p_banner_link, desc_about, date_created
+      FROM User
+      WHERE ${username ? "username" : "id_user"} = ?;
+    `;
 
-  if (username) {
-    // If username is provided, search by username
-    query =
-      "SELECT id_user, username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE username = ?";
-    queryParams = [username];
-  } else {
-    // If no username is provided, search by user ID
-    query =
-      "SELECT id_user, username, p_image_link, p_banner_link, desc_about, date_created FROM User WHERE id_user = ?";
-    queryParams = [userId];
-  }
+    const results = await executeQuery(query, [username || userId]);
 
-  db.query(query, queryParams, (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else if (results.length === 0) {
+    if (results.length === 0) {
       res.status(404).json({ success: false, error: "User not found" });
     } else {
       res.json({ success: true, user: results[0] });
     }
-  });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
 // Gets the username of the user with the given user ID from the JWT token
-users.get("/get_username", verifyToken, (req, res, next) => {
-  const userId = req.userId;
+users.get("/get_username", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const query = "SELECT username, p_image_link FROM User WHERE id_user = ?";
+    const results = await executeQuery(query, [userId]);
 
-  const query = "SELECT username, p_image_link FROM User WHERE id_user = ?";
-
-  db.query(query, [userId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else if (results.length === 0) {
+    if (results.length === 0) {
       res.status(404).json({ success: false, error: "User not found" });
     } else {
-      res.json({
-        success: true,
-        username: results[0].username,
-        p_image_link: results[0].p_image_link,
-      });
+      const { username, p_image_link } = results[0];
+      res.json({ success: true, username, p_image_link });
     }
-  });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
 // Updates the user's description / about section
-users.post("/update_desc_about", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const { desc_about } = req.body;
+users.post("/update_desc_about", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { desc_about } = req.body;
 
-  const updateQuery = "UPDATE User SET desc_about = ? WHERE id_user = ?";
+    const updateQuery = "UPDATE User SET desc_about = ? WHERE id_user = ?";
 
-  db.query(updateQuery, [desc_about, userId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else {
-      res.json({ success: true, results });
-    }
-  });
+    const results = await executeQuery(updateQuery, [desc_about, userId]);
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
 // Updates the user's profile picture
-users.post("/update_profile_picture", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const { p_image_link } = req.body;
+users.post("/update_profile_picture", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { p_image_link } = req.body;
 
-  const updateQuery = "UPDATE User SET p_image_link = ? WHERE id_user = ?";
+    const updateQuery = "UPDATE User SET p_image_link = ? WHERE id_user = ?";
 
-  db.query(updateQuery, [p_image_link, userId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else {
-      res.json({ success: true, results });
-    }
-  });
+    const results = await executeQuery(updateQuery, [p_image_link, userId]);
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
 // Updates the user's cover picture
-users.post("/update_cover_picture", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const { p_banner_link } = req.body;
+users.post("/update_cover_picture", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { p_banner_link } = req.body;
 
-  const updateQuery = "UPDATE User SET p_banner_link = ? WHERE id_user = ?";
+    const updateQuery = "UPDATE User SET p_banner_link = ? WHERE id_user = ?";
 
-  db.query(updateQuery, [p_banner_link, userId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else {
-      res.json({ success: true, results });
-    }
-  });
+    const results = await executeQuery(updateQuery, [p_banner_link, userId]);
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
-// Gets the user's friends that he is following
-users.get("/get_friends", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const username = req.query.username;
-  const type = req.query.type;
+// Gets the user's friends that he is following or followers
+users.get("/get_friends", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const username = req.query.username;
+    const type = req.query.type;
 
-  let query;
+    let query;
 
-  if (type === "following") {
-    query = `
-    SELECT fu.username, fu.p_image_link
-    FROM User u
-    JOIN Friends f ON u.id_user = f.user_id
-    JOIN User fu ON f.followed_user_id = fu.id_user
-    WHERE u.username = ?;  
-    `;
-  } else if (type === "followers") {
-    query = `
-    SELECT fu.username, fu.p_image_link
-    FROM User u
-    JOIN Friends f ON u.id_user = f.followed_user_id
-    JOIN User fu ON f.user_id = fu.id_user
-    WHERE u.username = ?;
-    `;
-  } else {
-    res.status(400).json({ success: false, error: "Invalid type" });
-    return;
-  }
-
-  // const query = `
-  // SELECT fu.username, fu.p_image_link
-  // FROM User u
-  // JOIN Friends f ON u.id_user = f.user_id
-  // JOIN User fu ON f.followed_user_id = fu.id_user
-  // WHERE u.username = ?;
-  // `;
-
-  db.query(query, [username], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
+    if (type === "following") {
+      query = `
+        SELECT fu.username, fu.p_image_link
+        FROM User u
+        JOIN Friends f ON u.id_user = f.user_id
+        JOIN User fu ON f.followed_user_id = fu.id_user
+        WHERE u.username = ?;
+      `;
+    } else if (type === "followers") {
+      query = `
+        SELECT fu.username, fu.p_image_link
+        FROM User u
+        JOIN Friends f ON u.id_user = f.followed_user_id
+        JOIN User fu ON f.user_id = fu.id_user
+        WHERE u.username = ?;
+      `;
     } else {
-      res.json({ success: true, friends: results });
+      res.status(400).json({ success: false, error: "Invalid type" });
+      return;
     }
-  });
+
+    const results = await executeQuery(query, [username]);
+    res.json({ success: true, friends: results });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
 });
 
 // Check if the user is following the given user, returns true if following, false if not
-users.get("/check_if_friends", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const friendId = req.query.friendId;
+users.get("/check_if_friends", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const friendId = req.query.friendId;
 
-  const query = `
-  SELECT * FROM Friends WHERE user_id = ? AND followed_user_id = ?;
-  `;
+    const query =
+      "SELECT * FROM Friends WHERE user_id = ? AND followed_user_id = ?;";
 
-  db.query(query, [userId, friendId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
-    } else {
-      res.json({ success: true, isFollowing: results.length > 0 });
-    }
-  });
+    const results = await executeQuery(query, [userId, friendId]);
+    res.json({ success: true, isFollowing: results.length > 0 });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
 });
 
 // Adds the given user to the user's friends
-users.post("/add_friend", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const friendId = req.body.friendId;
+users.post("/add_friend", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const friendId = req.body.friendId;
 
-  const query = `
-  INSERT INTO Friends (user_id, followed_user_id) VALUES (?, ?);
-  `;
+    const query =
+      "INSERT INTO Friends (user_id, followed_user_id) VALUES (?, ?);";
 
-  db.query(query, [userId, friendId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
-    } else {
-      res.json({ success: true });
-    }
-  });
+    const results = await executeQuery(query, [userId, friendId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
 });
 
 // Removes the given user from the user's friends
-users.post("/remove_friend", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const friendId = req.body.friendId;
+users.post("/remove_friend", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const friendId = req.body.friendId;
 
-  const query = `
-  DELETE FROM Friends WHERE user_id = ? AND followed_user_id = ?;
-  `;
+    const query =
+      "DELETE FROM Friends WHERE user_id = ? AND followed_user_id = ?;";
 
-  db.query(query, [userId, friendId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
-    } else {
-      res.json({ success: true });
-    }
-  });
+    const results = await executeQuery(query, [userId, friendId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
 });
 
 // Get all likes
-users.get("/get_stats", verifyToken, (req, res) => {
-  const userId = req.query.user_id;
+users.get("/get_stats", verifyToken, async (req, res) => {
+  try {
+    const userId = req.query.user_id;
 
-  const query = `
-  SELECT
-    (SELECT COUNT(*) FROM ProfilePost WHERE user_id = ?) AS profile_post_count,
-    (SELECT COUNT(*) FROM Car WHERE user_id = ?) AS car_count;
+    const query = `
+      SELECT
+        (SELECT COUNT(*) FROM ProfilePost WHERE user_id = ?) AS profile_post_count,
+        (SELECT COUNT(*) FROM Car WHERE user_id = ?) AS car_count;
+    `;
 
-  `;
-
-  db.query(query, [userId, userId], (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false });
-    } else {
-      res.json({ success: true, stats: results[0] });
-    }
-  });
+    const results = await executeQuery(query, [userId, userId]);
+    res.json({ success: true, stats: results[0] });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false });
+  }
 });
 
 // Search users
-users.get("/search_users", verifyToken, (req, res) => {
-  const userId = req.userId;
-  const searchQuery = req.query.search_query;
+users.get("/search_users", verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const searchQuery = req.query.search_query;
 
-  console.log("search_query", searchQuery);
+    console.log("search_query", searchQuery);
 
-  const query = `
-  SELECT id_user, username, p_image_link
-  FROM User
-  WHERE username LIKE ?
-  LIMIT 10;
-  `;
+    const query = `
+      SELECT id_user, username, p_image_link
+      FROM User
+      WHERE username LIKE ?
+      LIMIT 10;
+    `;
 
-  db.query(query, [`%${searchQuery}%`], (err, results) => {
-    if (err) {
-      res.status(500).json({ success: false });
-    } else {
-      res.json({ success: true, users: results });
-    }
-  });
+    const results = await executeQuery(query, [`%${searchQuery}%`]);
+    res.json({ success: true, users: results });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
 });
 
 module.exports = users;

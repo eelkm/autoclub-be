@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const events = express.Router();
-const db = require("../db/db.js");
+const { executeQuery } = require("../db/db.js");
 const jwt = require("jsonwebtoken");
 
 // Middleware to verify the JWT token
@@ -29,22 +29,21 @@ function verifyToken(req, res, next) {
 }
 
 // Gets all events
-events.get("/get_events", verifyToken, (req, res, next) => {
-  const userId = req.userId;
-  const query = `
-    SELECT *
-    FROM Event
-    Where is_public = 1;
-  `;
+events.get("/get_events", verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const query = `
+      SELECT *
+      FROM Event
+      WHERE is_public = 1;
+    `;
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error querying database: ", err);
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    } else {
-      res.json({ success: true, events: results });
-    }
-  });
+    const results = await req.db.executeQuery(query);
+    res.json({ success: true, events: results });
+  } catch (error) {
+    console.error("Error querying database: ", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 });
 
 module.exports = events;

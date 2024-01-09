@@ -1,11 +1,11 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const path = require("path");
 
 const bodyParser = require("body-parser");
-const db = require("./db/db.js");
+const { pool, executeQuery } = require("./db/db.js"); // Update the import
+
 const app = express();
 const port = 6969;
 
@@ -16,7 +16,10 @@ app.use(bodyParser.json());
 // Pool connection middleware
 app.use(async (req, res, next) => {
   try {
-    req.db = db;
+    req.db = {
+      pool,
+      executeQuery,
+    };
     next();
   } catch (error) {
     console.error("Database connection error:", error);
