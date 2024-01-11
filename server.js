@@ -53,15 +53,17 @@ app.use("/events", event_routes);
 
 app.use("/s3url", s3url);
 
-// // Static files
-// // Serve static files from the 'dist' directory
-// app.use(express.static(path.join(__dirname, "dist")));
+// HTTPS Configuration
+const https = require("https");
+const fs = require("fs");
 
-// // Handle all other routes by serving the 'index.html' file
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "dist/index.html"));
-// });
+const sslOptions = {
+  key: fs.readFileSync(process.env.SSL_KEY_PATH),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH),
+};
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+const httpsServer = https.createServer(sslOptions, app);
+
+httpsServer.listen(port, () => {
+  console.log(`HTTPS Server is running on port ${port}`);
 });
