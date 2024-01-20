@@ -18,13 +18,13 @@ comments.get("/", verifyToken, async (req, res, next) => {
         User.username,
         User.p_image_link,
         COUNT(Likes.comment_id) AS likes_count,
-        CASE WHEN Likes.user_id = ? THEN true ELSE false END AS has_liked
+        MAX(CASE WHEN Likes.user_id = ? THEN true ELSE false END) AS has_liked
       FROM Comment
       INNER JOIN User ON Comment.user_id = User.id_user
-      LEFT JOIN Likes ON Comment.id_comment = Likes.comment_id AND Likes.user_id = ?
+      LEFT JOIN Likes ON Comment.id_comment = Likes.comment_id
     `;
 
-    let queryParams = [user_id, user_id];
+    let queryParams = [user_id];
 
     if (car_id) {
       query += " WHERE Comment.car_id = ?";
@@ -37,7 +37,7 @@ comments.get("/", verifyToken, async (req, res, next) => {
       queryParams.push(club_post_id);
     }
 
-    query += " GROUP BY Comment.id_comment";
+    query += "GROUP BY Comment.id_comment, User.username, User.p_image_link";
 
     // Execute the query
     const results = await executeQuery(query, queryParams);
